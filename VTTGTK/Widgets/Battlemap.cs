@@ -1,61 +1,77 @@
 ﻿using Gtk;
 using Gdk;
+using Cairo;
 
 namespace VTTGTK.Widgets;
 
 class Battlemap : Bin {
 	int mouseX, mouseY;
+	bool mouseDown;
 	int gridX, gridY;
 
-	EventBox eventBox;
-	ScrolledWindow scroller;
-	Fixed positioner;
-	DrawingArea back;
+	int dragStartX, dragStartY;
 
-	Box topBar;
+	Box vboxMainLayout;
+	Box hboxSubLayout;
+
+	EventBox eventBattlemap;
+	ScrolledWindow scrollBattlemap;
+	Fixed positionerBattlemap;
+	DrawingArea canvasBattlemap;
+
+	Box hboxTopBar;
 	Label labelMousePosition;
 	Label labelGridPosition;
 
+	Box vboxRightSideButtons;
+
 	public int GridWidth = 10, GridHeight = 10;
 	public int GridSize = 70;
+
+	public List<Token> Tokens = new();
 
 	private void ScrollValueChanged(object? sender, EventArgs e) {
 		RedrawBackground();
 	}
 
 	void MouseMove(object o, MotionNotifyEventArgs args) {
-		mouseX = (int)args.Event.X + (int)scroller.Hadjustment.Value;
-		mouseY = (int)args.Event.Y + (int)scroller.Vadjustment.Value;
+		mouseX = (int)args.Event.X + (int)scrollBattlemap.Hadjustment.Value;
+		mouseY = (int)args.Event.Y + (int)scrollBattlemap.Vadjustment.Value;
 		gridX = mouseX / GridSize;
 		gridY = mouseY / GridSize;
 
 		labelMousePosition.Text = $"Mouse: {mouseX}, {mouseY}";
 		labelGridPosition.Text = $"Grid: {mouseX / GridSize}, {mouseY / GridSize}";
 
+		if (mouseDown) {
+			MouseDrag();
+		}
+
 		RedrawBackground();
 	}
-
-	private void OnClick(object o, ButtonPressEventArgs args) {
+	void MouseDown(object o, ButtonPressEventArgs args) {
+		mouseDown = true;
+		dragStartX = mouseX;
+		dragStartY = mouseY;
 		RedrawBackground();
+	}
+	void MouseDrag() {
+	}
+	private void MouseUp(object o, ButtonReleaseEventArgs args) {
+		mouseDown = false;
 	}
 
 	void RedrawBackground() {
 		// hack because Widget.QueueDraw doesn't work
-		back.SetSizeRequest(GridWidth * GridSize, GridHeight * GridSize);
-		back.Hide();
-		back.Show();
+		canvasBattlemap.SetSizeRequest(GridWidth * GridSize, GridHeight * GridSize);
+		canvasBattlemap.Hide();
+		canvasBattlemap.Show();
 	}
 	void OnDraw(object o, DrawnArgs args) {
 		var c = args.Cr;
 
-		c.SetSourceRGB(0, 0, 0);
-		c.Translate(gridX * GridSize, gridY * GridSize);
-		c.Rectangle(0, 0, GridSize, GridSize);
-		c.Stroke();
-		c.Translate(-gridX * GridSize, -gridY * GridSize);
-
 		// draw grid
-		c.SetSourceRGBA(0, 0, 0, 0.1);
+		c.SetSourceRGBA(0.9, 0.9, 0.9, 1);
 		for (int x = -1; x <= GridWidth; x++) {
 			c.LineTo(x * GridSize, 0);
 			c.LineTo(x * GridSize, GridHeight * GridSize);
@@ -66,15 +82,43 @@ class Battlemap : Bin {
 			c.LineTo(GridWidth * GridSize, y * GridSize);
 			c.Stroke();
 		}
+
+		c.SetSourceRGB(0, 0, 0);
+		c.Translate(gridX * GridSize, gridY * GridSize);
+		c.Rectangle(0, 0, GridSize, GridSize);
+		c.Stroke();
+		c.Translate(-gridX * GridSize, -gridY * GridSize);
+
+		if (mouseDown) {
+			c.MoveTo(dragStartX, dragStartY);
+			c.LineTo(mouseX, mouseY);
+			c.Stroke();
+		}
+
+		DrawTokens(c);
+	}
+
+	void DrawTokens(Context c) {
+		c.SetSourceRGB(0, 1, 0);
+		foreach (Token token in Tokens) {
+			double x = token.X * GridSize;
+			double y = token.Y * GridSize;
+			double size = (double)token.Size * GridSize;
+
+			c.Translate(x, y);
+			c.Arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+			c.Fill();
+			c.Translate(-x, -y);
+		}
 	}
 
 	public Battlemap() {
-		Box container = new(Orientation.Vertical, DefaultItemSpacing);
-		Add(container);
+		vboxMainLayout = new(Orientation.Vertical, DefaultItemSpacing);
+		Add(vboxMainLayout);
 
 		// top bar
-		Entry entryWidth = new Entry() { PlaceholderText = "Battlemap Width", };
-		Entry entryHeight = new Entry() { PlaceholderText = "Battlemap Height", };
+		Entry entryWidth = new Entry() { PlaceholderText = "Width", };
+		Entry entryHeight = new Entry() { PlaceholderText = "Height", };
 		Button buttonSetDimensions = new Button("Apply");
 
 		buttonSetDimensions.Clicked += delegate {
@@ -89,40 +133,60 @@ class Battlemap : Bin {
 
 		labelMousePosition = new("mouse position");
 		labelGridPosition = new("grid position");
-		topBar = new Box(Orientation.Horizontal, DefaultItemSpacing) {
+		hboxTopBar = new Box(Orientation.Horizontal, DefaultItemSpacing) {
 			new Label("Battlemap Dimensions: "), entryWidth, entryHeight, buttonSetDimensions, new Separator(Orientation.Vertical),
 
 			labelMousePosition,
 			labelGridPosition,
 		};
-		container.Add(topBar);
-		container.Add(new Separator(Orientation.Horizontal));
+		vboxMainLayout.Add(hboxTopBar);
+		vboxMainLayout.Add(new Separator(Orientation.Horizontal));
+
+		hboxSubLayout = new(Orientation.Horizontal, DefaultItemSpacing);
+		vboxMainLayout.Add(hboxSubLayout);
 
 		// positionable area
-		eventBox = new() {
+		eventBattlemap = new() {
 			Expand = true,
 		};
-		container.Add(eventBox);
-		scroller = new() {
+		hboxSubLayout.Add(eventBattlemap);
+		scrollBattlemap = new() {
 			Expand = true,
 		};
-		eventBox.Add(scroller);
+		eventBattlemap.Add(scrollBattlemap);
 
-		positioner = new Fixed() {
+		positionerBattlemap = new Fixed() {
 			Expand = true,
 		};
-		scroller.Add(positioner);
+		scrollBattlemap.Add(positionerBattlemap);
 
-		back = new();
-		back.Drawn += OnDraw;
-		positioner.Put(back, 0, 0);
-		back.SetSizeRequest(GridWidth * GridSize, GridWidth * GridSize);
+		vboxRightSideButtons = new(Orientation.Vertical, DefaultItemSpacing);
+		hboxSubLayout.Add(vboxRightSideButtons);
+		Button testButton = new("test");
+		testButton.SetSizeRequest(50, 50);
+		vboxRightSideButtons.Add(testButton);
 
-		eventBox.Events |= EventMask.PointerMotionMask | EventMask.ScrollMask;
-		eventBox.ButtonPressEvent += OnClick; ;
-		eventBox.MotionNotifyEvent += MouseMove;
+		canvasBattlemap = new();
+		canvasBattlemap.Drawn += OnDraw;
+		positionerBattlemap.Put(canvasBattlemap, 0, 0);
+		canvasBattlemap.SetSizeRequest(GridWidth * GridSize, GridWidth * GridSize);
 
-		scroller.Hadjustment.ValueChanged += ScrollValueChanged;
-		scroller.Vadjustment.ValueChanged += ScrollValueChanged;
+		eventBattlemap.Events |= EventMask.PointerMotionMask | EventMask.ScrollMask | EventMask.ButtonPressMask | EventMask.ButtonMotionMask | EventMask.AllEventsMask;
+		eventBattlemap.ButtonPressEvent += MouseDown;
+		eventBattlemap.MotionNotifyEvent += MouseMove;
+		eventBattlemap.ButtonReleaseEvent += MouseUp;
+
+		scrollBattlemap.Hadjustment.ValueChanged += ScrollValueChanged;
+		scrollBattlemap.Vadjustment.ValueChanged += ScrollValueChanged;
+
+		Tokens.Add(new Token() {
+			X = 10,
+			Y = 5,
+		});
 	}
+}
+
+class Token {
+	public int X, Y;
+	public int Size = 1;
 }
