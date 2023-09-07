@@ -1,5 +1,5 @@
 ﻿using Gtk;
-using VTTGT;
+using VTTGTK;
 
 namespace VTTGTK.Pages;
 

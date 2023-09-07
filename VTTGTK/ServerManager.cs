@@ -1,8 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using VTTGT.Messages;
+using VTTGTK.Messages;
+using VTTGTK.Messages;
 
-namespace VTTGT;
+namespace VTTGTK;
 
 static class ServerManager {
 	static Random RNG = new();
@@ -113,6 +114,20 @@ static class ServerManager {
 		Console.WriteLine($"s rcv {received} bytes from [{client.Name}:{id}]({client.State})");
 
 		switch (client.State) {
+			case ConnectionState.Normal:
+			case ConnectionState.AwaitingLobbyInfo: {
+				switch (message.Type) {
+					case MessageType.TokenMove: {
+						if (message is TokenMovedMessage tmm) {
+							SendToAll(tmm);
+						}
+
+						break;
+					}
+				}
+
+				break;
+			}
 
 			default: { break; }
 		}

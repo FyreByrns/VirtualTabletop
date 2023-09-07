@@ -1,16 +1,18 @@
-﻿namespace VTTGT.Messages;
+﻿namespace VTTGTK.Messages;
 
-public enum MessageType : byte
-{
-    None = 0,
+public enum MessageType : byte {
+	None = 0,
 
-    IDMessage,
+	IDMessage,
 
-    Connecting,
-    Disconnecting,
+	Connecting,
+	Disconnecting,
 
-    InfoRequest,
-    InfoResponse,
+	InfoRequest,
+	InfoResponse,
 
-    LobbyState,
+	LobbyState,
+
+	TokenMove,
+
 }

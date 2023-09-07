@@ -1,15 +1,21 @@
 ﻿using Gtk;
 using Gdk;
 using Cairo;
+using System.Drawing;
 
 namespace VTTGTK.Widgets;
 
 class Battlemap : Bin {
+	public delegate void TokenMovedEventHandler(int fromX, int fromY, int toX, int toY);
+	public event TokenMovedEventHandler TokenMoved;
+
 	int mouseX, mouseY;
 	bool mouseDown;
 	int gridX, gridY;
 
+	int gridDragStartX, gridDragStartY;
 	int dragStartX, dragStartY;
+	Token draggedToken;
 
 	Box vboxMainLayout;
 	Box hboxSubLayout;
@@ -30,7 +36,32 @@ class Battlemap : Bin {
 
 	public List<Token> Tokens = new();
 
-	private void ScrollValueChanged(object? sender, EventArgs e) {
+	public Token? GetTokenAt(int x, int y) {
+		foreach (Token token in Tokens) {
+			if (token.X == x && token.Y == y) {
+				return token;
+			}
+		}
+
+		return null;
+	}
+
+	// todo: check if the token may be moved
+	public void MoveToken(int fromX, int fromY, int toX, int toY, bool notify) {
+		Token token = GetTokenAt(fromX, fromY);
+		if (token is not null) {
+			token.X = toX;
+			token.Y = toY;
+
+			if (notify) {
+				TokenMoved?.Invoke(fromX, fromY, toX, toY);
+			}
+
+			RedrawBackground();
+		}
+	}
+
+	void ScrollValueChanged(object? sender, EventArgs e) {
 		RedrawBackground();
 	}
 
@@ -50,15 +81,45 @@ class Battlemap : Bin {
 		RedrawBackground();
 	}
 	void MouseDown(object o, ButtonPressEventArgs args) {
-		mouseDown = true;
-		dragStartX = mouseX;
-		dragStartY = mouseY;
+		StartDrag();
 		RedrawBackground();
 	}
 	void MouseDrag() {
+		ContinueDrag();
 	}
 	private void MouseUp(object o, ButtonReleaseEventArgs args) {
+		StopDrag();
+	}
+
+	void StartDrag() {
+		mouseDown = true;
+		dragStartX = mouseX;
+		dragStartY = mouseY;
+		gridDragStartX = gridX;
+		gridDragStartY = gridY;
+
+		// test for tokens grabbed
+		foreach (Token token in Tokens) {
+			if (gridX >= token.X && gridX < token.X + token.Size
+			 && gridY >= token.Y && gridY < token.Y + token.Size) {
+				draggedToken = token;
+				break;
+			}
+		}
+	}
+	void ContinueDrag() {
+
+	}
+	void StopDrag() {
 		mouseDown = false;
+
+		if (draggedToken != null) {
+			int newX = gridX - (int)draggedToken.Size / 2;
+			int newY = gridY - (int)draggedToken.Size / 2;
+
+			MoveToken(draggedToken.X, draggedToken.Y, newX, newY, true);
+		}
+		draggedToken = null;
 	}
 
 	void RedrawBackground() {
@@ -99,8 +160,7 @@ class Battlemap : Bin {
 	}
 
 	void DrawTokens(Context c) {
-		c.SetSourceRGB(0, 1, 0);
-		foreach (Token token in Tokens) {
+		void drawToken(Token token) {
 			double x = token.X * GridSize;
 			double y = token.Y * GridSize;
 			double size = (double)token.Size * GridSize;
@@ -109,6 +169,24 @@ class Battlemap : Bin {
 			c.Arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
 			c.Fill();
 			c.Translate(-x, -y);
+		}
+
+		c.SetSourceRGB(0, 1, 0);
+		foreach (Token token in Tokens) {
+			drawToken(token);
+		}
+
+		// draw dragged token
+		if (draggedToken != null) {
+			c.SetSourceRGB(0, 0, 1);
+			c.Translate(mouseX, mouseY);
+			c.Arc(0, 0, draggedToken.Size / 2 * GridSize, 0, Math.PI * 2);
+			c.Fill();
+			c.Translate(-mouseX, -mouseY);
+
+			// highlight drop area
+			c.Rectangle((gridX - draggedToken.Size / 2) * GridSize, (gridY - draggedToken.Size / 2) * GridSize, draggedToken.Size * GridSize, draggedToken.Size * GridSize);
+			c.Stroke();
 		}
 	}
 
@@ -119,13 +197,16 @@ class Battlemap : Bin {
 		// top bar
 		Entry entryWidth = new Entry() { PlaceholderText = "Width", };
 		Entry entryHeight = new Entry() { PlaceholderText = "Height", };
+		Entry entrySize = new Entry() { PlaceholderText = "Size", };
 		Button buttonSetDimensions = new Button("Apply");
 
 		buttonSetDimensions.Clicked += delegate {
 			if (int.TryParse(entryWidth.Text, out int newWidth)
-			&& int.TryParse(entryHeight.Text, out int newHeight)) {
+			&& int.TryParse(entryHeight.Text, out int newHeight)
+			&& int.TryParse(entrySize.Text, out int newSize)) {
 				GridWidth = newWidth;
 				GridHeight = newHeight;
+				GridSize = newSize;
 
 				RedrawBackground();
 			}
@@ -134,7 +215,7 @@ class Battlemap : Bin {
 		labelMousePosition = new("mouse position");
 		labelGridPosition = new("grid position");
 		hboxTopBar = new Box(Orientation.Horizontal, DefaultItemSpacing) {
-			new Label("Battlemap Dimensions: "), entryWidth, entryHeight, buttonSetDimensions, new Separator(Orientation.Vertical),
+			new Label("Battlemap Dimensions: "), entryWidth, entryHeight, entrySize, buttonSetDimensions, new Separator(Orientation.Vertical),
 
 			labelMousePosition,
 			labelGridPosition,
@@ -180,8 +261,9 @@ class Battlemap : Bin {
 		scrollBattlemap.Vadjustment.ValueChanged += ScrollValueChanged;
 
 		Tokens.Add(new Token() {
-			X = 10,
+			X = 2,
 			Y = 5,
+			Size = 1,
 		});
 	}
 }

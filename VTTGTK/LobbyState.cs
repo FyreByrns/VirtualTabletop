@@ -1,4 +1,4 @@
-﻿namespace VTTGT;
+﻿namespace VTTGTK;
 
 class LobbyState {
 }

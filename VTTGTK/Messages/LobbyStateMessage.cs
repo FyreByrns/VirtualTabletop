@@ -1,4 +1,4 @@
-﻿namespace VTTGT.Messages;
+﻿namespace VTTGTK.Messages;
 
 class LobbyStateMessage : Message, IMessageWithBody {
     public LobbyState LobbyState;

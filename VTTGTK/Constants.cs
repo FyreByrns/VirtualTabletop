@@ -1,4 +1,4 @@
-﻿namespace VTTGT;
+﻿namespace VTTGTK;
 
 static class Constants {
 	public const string DefaultIPString = "127.0.0.1";

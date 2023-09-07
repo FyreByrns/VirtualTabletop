@@ -1,7 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 
-namespace VTTGT;
+namespace VTTGTK;
 
 enum ConnectionState {
     None = 0,

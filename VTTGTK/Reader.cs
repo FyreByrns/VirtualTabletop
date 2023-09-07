@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace VTTGT;
+namespace VTTGTK;
 
 static class Reader {
     public static byte Byte(byte[] buffer, ref int readIndex) {

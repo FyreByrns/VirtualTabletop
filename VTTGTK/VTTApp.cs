@@ -1,10 +1,22 @@
 ﻿using Gtk;
 using VTTGTK.Pages;
+using VTTGTK.Widgets;
 
-namespace VTTGT;
+namespace VTTGTK;
 
 class VTTApp : Window {
-	public void ChangePageTo(Widget widget) {
+	public Battlemap Battlemap {
+		get {
+			if (Child is VTTPage vp && vp is Tabletop table) {
+				return table.Battlemap;
+			}
+			return null;
+		}
+	}
+
+	public void ChangePageTo<T>(T widget)
+		where T : VTTPage {
+
 		Remove(Child);
 		Add(widget);
 		ShowAll();

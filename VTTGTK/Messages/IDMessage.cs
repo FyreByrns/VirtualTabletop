@@ -1,4 +1,4 @@
-﻿namespace VTTGT.Messages;
+﻿namespace VTTGTK.Messages;
 
 using ID_T = MessageLength_T;
 

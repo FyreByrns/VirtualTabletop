@@ -1,4 +1,4 @@
-﻿namespace VTTGT.Messages;
+﻿namespace VTTGTK.Messages;
 
 public enum InfoType : byte
 {

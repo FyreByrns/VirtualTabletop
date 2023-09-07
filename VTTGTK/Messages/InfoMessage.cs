@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace VTTGT.Messages;
+namespace VTTGTK.Messages;
 
 class InfoMessage : Message, IMessageWithBody {
     public InfoType RequestType;

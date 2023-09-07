@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace VTTGT.Messages;
+namespace VTTGTK.Messages;
 
 abstract class Message {
     public MessageType Type;
@@ -83,6 +83,8 @@ abstract class Message {
             case MessageType.InfoRequest: return InfoRequestMessage.ParseBodyData(bodyData, messageLength);
             case MessageType.InfoResponse: return InfoMessage.ParseBodyData(bodyData, messageLength);
             case MessageType.LobbyState: return LobbyStateMessage.ParseBodyData(bodyData, messageLength);
+
+            case MessageType.TokenMove: return TokenMovedMessage.ParseBodyData(bodyData, messageLength);
         }
 
         return null;

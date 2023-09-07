@@ -1,9 +1,9 @@
-﻿global using static VTTGT.Constants;
-global using MessageType = VTTGT.Messages.MessageType;
+﻿global using static VTTGTK.Constants;
+global using MessageType = VTTGTK.Messages.MessageType;
 
 using Gtk;
 
-namespace VTTGT;
+namespace VTTGTK;
 
 internal class Program {
 	static void Main(string[] args) {

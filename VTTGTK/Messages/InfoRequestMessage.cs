@@ -1,4 +1,4 @@
-﻿namespace VTTGT.Messages;
+﻿namespace VTTGTK.Messages;
 
 class InfoRequestMessage : Message, IMessageWithBody
 {

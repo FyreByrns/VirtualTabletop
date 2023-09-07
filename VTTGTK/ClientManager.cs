@@ -2,13 +2,19 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using VTTGT.Messages;
+using VTTGTK.Messages;
 
-namespace VTTGT;
+namespace VTTGTK;
 
 static class ClientManager {
 	public delegate void ClientMessageReceived(byte[] data);
 	public static event ClientMessageReceived OnClientMessageReceived;
+
+	#region local state
+
+	public static VTTApp Instance { get; private set; }
+
+	#endregion local state
 
 	#region messaging
 
@@ -31,7 +37,9 @@ static class ClientManager {
 			await Task.Yield();
 		}
 	}
-	public static async void Connect(string ipString, string portString, string name) {
+	public static async void Connect(VTTApp instance, string ipString, string portString, string name) {
+		Instance = instance;
+
 		Client = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 		await Client.ConnectAsync(new IPEndPoint(IPAddress.Parse(ipString), int.Parse(portString)));

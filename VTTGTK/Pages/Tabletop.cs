@@ -1,70 +1,13 @@
 ﻿using Gtk;
-using VTTGT;
-using VTTGT.Messages;
+using VTTGTK;
+using VTTGTK.Messages;
 using VTTGTK.Widgets;
 
 namespace VTTGTK.Pages;
 
-class StatusWidget : Button {
-	Widget showHideToggle;
-	Box popupContainer;
-	Label nameLabel;
-	Label idLabel;
-
-	public string Name {
-		get {
-			return nameLabel?.Text ?? "%name%";
-		}
-		set {
-			if (nameLabel is not null) {
-				nameLabel.Text = value;
-			}
-		}
-	}
-	public string ID {
-		get {
-			return idLabel?.Text ?? "%id%";
-		}
-		set {
-			if (idLabel is not null) {
-				idLabel.Text = value;
-			}
-		}
-	}
-
-	public StatusWidget() {
-		Label = "Status";
-		Clicked += Click;
-
-		popupContainer = new Box(Orientation.Horizontal, DefaultItemSpacing);
-
-		nameLabel = new();
-		idLabel = new();
-
-		Box layout = new(Orientation.Horizontal, DefaultItemSpacing) {
-			new Box(Orientation.Horizontal, DefaultItemSpacing) {
-				new Label("Name: "),
-				nameLabel,
-			},
-			new Box(Orientation.Horizontal, DefaultItemSpacing) {
-				new Label("ID: "),
-				idLabel,
-			},
-		};
-		popupContainer.Add(layout);
-		showHideToggle = popupContainer;
-	}
-
-	private void Click(object? sender, EventArgs e) {
-		var temp = Child;
-		Remove(Child);
-		Add(showHideToggle);
-		showHideToggle = temp;
-		ShowAll();
-	}
-}
-
 class Tabletop : VTTPage {
+	public Battlemap Battlemap;
+	
 	int ClientID;
 	string Name;
 
@@ -80,10 +23,10 @@ class Tabletop : VTTPage {
 		Add(mainContainer);
 		mainContainer.Add(statusBarContainer);
 
-		Battlemap backGrid = new() {
+		Battlemap = new() {
 			Expand = true,
 		};
-		mainContainer.Add(backGrid);
+		mainContainer.Add(Battlemap);
 
 		//backGrid.Put(new Label("hello"), 4, 4);
 		//backGrid.Put(new Label("there"), 2, 4);
@@ -92,6 +35,11 @@ class Tabletop : VTTPage {
 		statusBarContainer.Add(status);
 
 		ClientManager.OnClientMessageReceived += OnClientData;
+		Battlemap.TokenMoved += TokenMoved;
+	}
+
+	private void TokenMoved(int fromX, int fromY, int toX, int toY) {
+		ClientManager.Send(new TokenMovedMessage(fromX, fromY, toX, toY));
 	}
 
 	void OnClientData(byte[] data) {
@@ -136,6 +84,13 @@ class Tabletop : VTTPage {
 							break;
 						}
 					}
+				}
+				break;
+			}
+
+			case MessageType.TokenMove: {
+				if (message is TokenMovedMessage tmm) {
+					Parent.Battlemap.MoveToken(tmm.FromX, tmm.FromY, tmm.ToX, tmm.ToY, false);
 				}
 				break;
 			}
