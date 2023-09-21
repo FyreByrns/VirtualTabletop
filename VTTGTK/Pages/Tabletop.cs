@@ -62,7 +62,7 @@ class Tabletop : VTTPage {
 							string nameAttempt = Parent.Ask("What is your name?");
 
 							ClientManager.Send(
-								new InfoMessage(
+								new InfoResponseMessage(
 									InfoType.Name,
 									nameAttempt)
 								);
@@ -75,7 +75,7 @@ class Tabletop : VTTPage {
 			}
 
 			case MessageType.InfoResponse: {
-				if (message is InfoMessage imres) {
+				if (message is InfoResponseMessage imres) {
 					switch (imres.RequestType) {
 						case InfoType.Name: {
 							Name = imres.Contents;

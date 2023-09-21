@@ -2,6 +2,7 @@
 
 using ID_T = MessageLength_T;
 
+[MessageType(MessageType.IDMessage)]
 class IDMessage : Message, IMessageWithBody
 {
     public ID_T ID;

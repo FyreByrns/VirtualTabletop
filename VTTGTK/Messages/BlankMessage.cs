@@ -1,5 +1,6 @@
 ﻿namespace VTTGTK.Messages;
 
+[MessageType(MessageType.None)]
 class BlankMessage : Message
 {
     protected override int GetBodyLength()

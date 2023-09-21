@@ -2,7 +2,8 @@
 
 namespace VTTGTK.Messages;
 
-class InfoMessage : Message, IMessageWithBody {
+[MessageType(MessageType.InfoResponse)]
+class InfoResponseMessage : Message, IMessageWithBody {
     public InfoType RequestType;
     public string Contents;
 
@@ -15,7 +16,7 @@ class InfoMessage : Message, IMessageWithBody {
         int responseLength = Reader.Int32(buffer, ref readIndex);
         string responseString = Reader.String(buffer, responseLength, ref readIndex);
 
-        return new InfoMessage(requestType, responseString);
+        return new InfoResponseMessage(requestType, responseString);
     }
 
     protected override int GetBodyLength() {
@@ -30,7 +31,7 @@ class InfoMessage : Message, IMessageWithBody {
         msgInProgress.AddRange(Encoding.ASCII.GetBytes(Contents));
     }
 
-    public InfoMessage(InfoType requestType, string contents)
+    public InfoResponseMessage(InfoType requestType, string contents)
         : base(MessageType.InfoResponse) {
 
         RequestType = requestType;

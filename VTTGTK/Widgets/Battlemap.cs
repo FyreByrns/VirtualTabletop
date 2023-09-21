@@ -267,8 +267,3 @@ class Battlemap : Bin {
 		});
 	}
 }
-
-class Token {
-	public int X, Y;
-	public int Size = 1;
-}

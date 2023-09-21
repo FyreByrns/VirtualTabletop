@@ -1,5 +1,6 @@
 ﻿namespace VTTGTK.Messages;
 
+[MessageType(MessageType.InfoRequest)]
 class InfoRequestMessage : Message, IMessageWithBody
 {
     public InfoType RequestType;

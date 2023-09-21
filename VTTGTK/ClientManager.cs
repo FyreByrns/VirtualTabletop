@@ -46,7 +46,7 @@ static class ClientManager {
 
 		Task _ = ListenerTask();
 
-		Send(new InfoMessage(InfoType.Name, name));
+		Send(new InfoResponseMessage(InfoType.Name, name));
 	}
 	public static void Disconnect() {
 		try {

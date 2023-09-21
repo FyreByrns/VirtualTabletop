@@ -5,7 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using VTTGTK.Messages;
 
+using static FSerialization.FSerializationLogic;
+
 namespace VTTGTK.Messages;
+
+[MessageType(MessageType.TokenMove)]
 class TokenMovedMessage : Message, IMessageWithBody {
 	public int FromX, FromY, ToX, ToY;
 
@@ -36,5 +40,34 @@ class TokenMovedMessage : Message, IMessageWithBody {
 		FromY = fromY;
 		ToX = toX;
 		ToY = toY;
+	}
+}
+
+[MessageType(MessageType.TokenCreate)]
+class TokenCreateMessage : Message, IMessageWithBody {
+	public Token Token;
+
+	public static Message ParseBodyData(byte[] buffer, int length) {
+		int readIndex = 0;
+
+		Token? result = new();
+		if (TryDeserialize(buffer, ref result)) {
+			return new TokenCreateMessage(result!);
+		}
+
+		return default;
+	}
+
+	protected override void CreateBody(List<byte> msgInProgress) {
+		TrySerialize(Token, out byte[] buf);
+		msgInProgress.AddRange(buf);
+	}
+
+	protected override int GetBodyLength() {
+		return Token.TotalFieldSize;
+	}
+
+	public TokenCreateMessage(Token token) : base(MessageType.TokenCreate) {
+		Token = token;
 	}
 }

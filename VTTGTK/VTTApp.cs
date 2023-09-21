@@ -1,6 +1,9 @@
-﻿using Gtk;
+﻿using FSerialization;
+using Gtk;
 using VTTGTK.Pages;
 using VTTGTK.Widgets;
+
+using static FSerialization.FSerializationLogic;
 
 namespace VTTGTK;
 
@@ -30,6 +33,9 @@ class VTTApp : Window {
 	}
 
 	public VTTApp() : base("VTT") {
+		// setup FSerialization deserializers
+		TypeRegistry.RegisterSerializerDeserializer(new TokenSerializerDeserializer());
+
 		// load CSS
 		CssProvider css = new CssProvider();
 		css.LoadFromPath("style.css");

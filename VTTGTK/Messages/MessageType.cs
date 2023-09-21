@@ -13,6 +13,6 @@ public enum MessageType : byte {
 
 	LobbyState,
 
+	TokenCreate,
 	TokenMove,
-
 }

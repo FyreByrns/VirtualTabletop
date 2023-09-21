@@ -35,7 +35,7 @@ static class ServerManager {
 
 		Message initialMessage = Message.Parse(buf, initialRcvLength);
 
-		if (initialMessage is InfoMessage irm && irm.RequestType == InfoType.Name) {
+		if (initialMessage is InfoResponseMessage irm && irm.RequestType == InfoType.Name) {
 			if (NameAllowed(irm.Contents)) {
 				SetName(connection, irm.Contents);
 			}
@@ -61,7 +61,7 @@ static class ServerManager {
 	static void SetName(Connection client, string name) {
 		client.Name = name;
 		client.State = ConnectionState.AwaitingLobbyInfo;
-		SendTo(new InfoMessage(InfoType.Name, name), client.ID);
+		SendTo(new InfoResponseMessage(InfoType.Name, name), client.ID);
 	}
 
 	public static void Update() {

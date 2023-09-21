@@ -1,6 +1,5 @@
 ﻿global using MessageLength_T = System.Int32;
-
-using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 
 namespace VTTGTK.Messages;
@@ -26,6 +25,8 @@ abstract class Message {
         MessageType.Connecting,
         MessageType.Disconnecting,
     };
+
+    public static Dictionary<MessageType, Func<byte[], int, Message>> BodyDataParsers = new();
 
     protected Message(MessageType type) {
         Type = type;
@@ -78,15 +79,26 @@ abstract class Message {
 
         byte[] bodyData = buffer[readIndex..(readIndex + messageLength)];
 
-        switch (type) {
-            case MessageType.IDMessage: return IDMessage.ParseBodyData(bodyData, messageLength);
-            case MessageType.InfoRequest: return InfoRequestMessage.ParseBodyData(bodyData, messageLength);
-            case MessageType.InfoResponse: return InfoMessage.ParseBodyData(bodyData, messageLength);
-            case MessageType.LobbyState: return LobbyStateMessage.ParseBodyData(bodyData, messageLength);
-
-            case MessageType.TokenMove: return TokenMovedMessage.ParseBodyData(bodyData, messageLength);
+        if (BodyDataParsers.ContainsKey(type)) {
+            return BodyDataParsers[type](bodyData, messageLength);
         }
 
         return null;
+    }
+
+    static Message() {
+        // grab messagetype attributes from message classes
+        // .. and associate ParseBodyData methods
+        foreach(var msgType in Assembly.GetExecutingAssembly().GetTypes().Where(x => x.IsAssignableTo(typeof(Message)))) {
+            foreach(var type in msgType.GetCustomAttributes<MessageTypeAttribute>()) {
+                MethodInfo info = msgType.GetMethod("ParseBodyData");
+                
+                var parseBodyData = delegate (byte[] bodyData, int messageLength) {
+                    return (Message)info!.Invoke(null, new object[] { bodyData, messageLength })!;
+                };
+
+                BodyDataParsers[type.Type] = parseBodyData;
+            }
+        }
     }
 }
